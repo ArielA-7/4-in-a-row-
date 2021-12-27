@@ -1,0 +1,156 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Threading;
+
+namespace ConsoleApp12
+{
+    class Program
+    {
+        static int rowLength = 6;
+        static int coulmnLenth = 7;
+
+        static bool isWinner(char[,] table, int cultr)
+        {
+            for (int i = 5; i > 0; i--) // ניצחון בשורה - בדיקה
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (table[i, j] == table[i, j + 1] && table[i, j] == table[i, j + 2] && table[i, j] == table[i, j + 3] && table[i, j] != '-')
+                        return true;
+                }
+
+            }
+            for (int i = 5; i > 2; i--) // ניצחון בטור - בדיקה
+            {
+                if (table[i, cultr - 1] == table[i - 1, cultr - 1] && table[i, cultr - 1] == table[i - 2, cultr - 1] && table[i, cultr - 1] == table[i - 3, cultr - 1] && table[i, cultr - 1] != '-')
+                    return true;
+            }
+            for (int i = 5; i > 2; i--) // ניצחון באלכסון מצד שמאל - בדיקה
+            {
+                for (int j = 0; j < 4; j++)
+                {
+                    if (table[i, j] == table[i - 1, j + 1] && table[i, j] == table[i - 2, j + 2] && table[i, j] == table[i - 3, j + 3] && table[i, j] != '-')
+                        return true;
+                }
+            }
+            for (int i = 5; i > 2; i--) // ניצחון באלכסון מצד ימין - בדיקה
+            {
+                for (int j = 6; j > 2; j--)
+                {
+                    if (table[i, j] == table[i - 1, j - 1] && table[i, j] == table[i - 2, j - 2] && table[i, j] == table[i - 3, j - 3] && table[i, j] != '-')
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        static void insertCoin(int cul, char player, char[,] arr)
+        {
+            for (int i = 1; i <= rowLength; i++)
+            {
+                if (arr[rowLength - i, cul - 1] == '-')
+                {
+                    arr[rowLength - i, cul - 1] = player;
+                    break;
+                }
+            }
+
+        }
+
+        static char[,] creatTable(int rows, int coulomns)
+        {
+            char[,] table = new char[rows, coulomns];
+
+            for (int i = 0; i < table.GetLength(0); i++)
+            {
+                for (int j = 0; j < table.GetLength(1); j++)
+                {
+                    table[i, j] = '-';
+                }
+
+            }
+
+            return table;
+        }
+
+        static void printTable(char[,] arr)
+        {
+            for (int i = 0; i < arr.GetLength(0); i++)
+            {
+                for (int j = 0; j < arr.GetLength(1); j++)
+                {
+                    Console.Write(arr[i, j]);
+                }
+                Console.WriteLine();
+            }
+        }
+
+        static void Main(string[] args)
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                Thread.Sleep(150);
+            }
+            Console.WriteLine("                                        welcome to the game - 4 in a row");
+            Console.WriteLine();
+            for (int i = 0; i < 3; i++)
+            {
+                Thread.Sleep(400);
+            }
+            Console.WriteLine("                                                    enjoy :)");
+            for (int i = 0; i < 3; i++)
+            {
+                Thread.Sleep(400);
+            }
+            Console.WriteLine();
+            Console.WriteLine();
+            bool flag = false;
+            char player = '*';
+            int cultr = 0;
+            char[,] table = creatTable(rowLength, coulmnLenth);
+            int k = 0;
+            Console.WriteLine("Table status:");
+            printTable(table);
+            Console.WriteLine();
+            Console.WriteLine();
+
+            while (flag != true)
+            {
+                Console.WriteLine("Select a column number");
+                cultr = int.Parse(Console.ReadLine());
+                insertCoin(cultr, player, table);
+                for (int i = 0; i < 3; i++)
+                {
+                    Thread.Sleep(25);
+                }
+                Console.WriteLine();
+                Console.WriteLine("Table status:");
+                printTable(table);
+                Console.WriteLine();
+
+                flag = isWinner(table, cultr);
+                k++;
+                if (k % 2 == 0)
+                {
+                    player = '*';
+                }
+                else
+                {
+                    player = 'o';
+                }
+            }
+            if ((k - 1) % 2 == 0)
+            {
+                Console.WriteLine("                                            The winner is the First player!");
+            }
+            else
+            {
+                Console.WriteLine("                                            The winner is the Second player!");
+            }
+
+        }
+    }
+}
