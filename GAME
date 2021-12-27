@@ -1,0 +1,935 @@
+ ; template for programs
+.model small
+.stack 100h
+.data
+
+
+SaveS dw 0 ; place to save something
+save_this dw 0  ; place to save something
+
+culterNumber dw 0 ; place to save culterNumber
+
+
+ip_adr dw ? 
+ip_adr2 dw ? 
+Tagain_adr dw ? 
+
+answer dw 0 ; number that we get after we do modulo
+
+
+msg db "welcome to the game - 4 in a row!"
+MsgLen EQU $-msg
+
+enjoy_msg db "enjoy :)"
+Len_msg EQU $-enjoy_msg 
+
+firstP_win db "The winner is the First Player!"
+Msg_Len1 EQU $-firstP_win
+
+SecoundP_win db "The winner is the secound Player!"
+Len_Msg1 EQU $-SecoundP_win
+
+Table_Status db "Table status:"
+Msg_Table EQU $-Table_Status
+
+Colunm_Number db "Select a column number: "
+Msg_Colunm EQU $-Colunm_Number
+
+Try_Again db "Try again"
+MsgLEN1 EQU $-Try_Again
+
+inaROW db "4 in a row!"
+inaROW_Len EQU $-inaROW
+
+draw db "draw. No winners!"
+draw_Len EQU $-draw
+
+
+
+rows equ 6
+columns equ 7
+board db 6 dup('-','-','-','-','-','-','-')
+
+maholak dw ? 
+mahalek dw ? 
+
+
+flag dw 1
+player db '*'
+k dw 0
+
+
+
+.code
+
+mov ax,@data
+mov ds, ax
+
+; here your program starts
+;;;;;; print mahrozot & wait
+call FinaROW   
+call wait 
+call welcomeMahrozet
+call wait
+call enjoyMahrozet
+call wait
+call TableStatus_Mahrozet
+
+mov ah,14 ; yeridat shora
+mov al, '\n' 
+int 10h
+call print_table ; print table
+mov al, '\n' ; yeridat shora
+int 10h
+
+while_Game: ; start game
+call checkDraw
+cmp flag,1 ; if flag==0, program end
+jne is_Winner ; jmp to exitGame if flag=0
+
+call FinaROW ; print mahrozet (4 in a row)
+call TableStatus_Mahrozet ; print mahrozet (table status:)
+
+;;;; yeridat sora
+mov ah,14 
+mov al, '\n'
+int 10h
+
+
+;;; Move the cursor to (13,0)
+mov ah,2
+mov dl,23
+mov dh,13
+int 10h
+
+call get_number ; input number and check 
+pop ax
+
+
+mov SaveS,0 ; save ax= culter number 
+sub al,49 ; sub 48 (ascii) + 1 (table)
+mov ah,0
+add SaveS,ax
+push ax
+call insertCoirn ; insert coin
+call cleanScreen ; clean screen
+
+; Move the cursor to (6,0)
+mov ah,2
+mov dh,6
+mov dl,0
+int 10h
+
+call print_table ; print table 
+
+;;;; check win
+call check_rows ; check if we have 4 in a row
+push SaveS ; push number culter
+call check_colunms ; check- 4 in colunm
+call check_diagonalS ; check- 4 in diagonal (from small side)
+call check_diagonalR; check- 4 in diagonal (from right side)
+
+inc k ; k++
+push k
+mov ch,0
+mov cl,2
+push cx
+
+call modulo ; if (k%2 == 0) - first player turn 
+pop answer
+cmp answer,0
+je equala
+mov player,'o' ; if (k%2!=0) - secound player turn
+jmp while_Game
+equala: mov player, '*'
+jmp while_Game
+
+is_Winner: ; the program stops and comes here
+
+sub k,1
+push k
+mov ch,0
+mov cl,2
+push cx
+call modulo
+pop answer
+
+cmp answer,0 ; if ((k-1)%2 == 0) - first player turn 
+jne Player2Win
+call FirstP_Mahrozet
+jmp exit_game
+Player2Win:  ; if ((k-1)%2 != 0) - secound player turn 
+call SecoundP_Mahrozet 
+
+
+exit_game: ; program stop
+
+
+
+
+
+
+
+; here your program ends
+
+mov ah,4ch
+int 21h
+
+; here your sub-programs start
+wait:
+pop ip_adr
+Push ax
+Push bx
+Push dx	 
+mov ah,86h
+mov cx,0
+mov dx,500
+int  15h
+Pop DX
+Pop CX
+Pop AX
+push ip_adr
+ret
+
+
+
+
+welcomeMahrozet:
+pop ip_adr
+push ax
+push cx
+push bx
+push dx
+mov al, 01B  
+mov bh, 0  
+mov bl, 0011b 
+mov cx, MsgLen 
+mov dl, 22
+mov dh, 3
+push ds			
+pop es  			
+mov bp, offset msg	
+mov ah, 13h
+int 10h
+pop dx
+pop bx
+pop cx 
+pop ax
+push ip_adr
+ret
+
+
+draw_Mahrozet:
+pop ip_adr
+push ax
+push cx
+push bx
+push dx
+mov al, 01B  
+mov bh, 0  
+mov bl, 01001011b 
+mov cx, draw_Len  
+mov dl, 30
+mov dh, 15
+push ds			
+pop es  			
+mov bp, offset draw	
+mov ah, 13h
+int 10h
+pop dx
+pop bx
+pop cx 
+pop ax
+push ip_adr
+ret
+
+
+
+
+enjoyMahrozet:
+pop ip_adr
+push ax
+push cx
+push bx 
+push dx
+mov al, 01B  
+mov bh, 0  
+mov bl, 00001101b 
+mov cx, Len_msg 
+mov dl, 35
+mov dh, 4
+push ds			
+pop es  			
+mov bp, offset enjoy_msg 	
+mov ah, 13h
+int 10h
+pop dx
+pop bx
+pop cx
+pop ax
+
+push ip_adr
+ret
+
+Select_Culunm:
+pop ip_adr2
+push ax
+push cx
+push bx 
+push dx
+mov al, 01B  
+mov bh, 0  
+mov bl, 00001101b 
+mov cx, Msg_Colunm
+mov dh,13
+mov dl,0
+push ds			
+pop es  			
+mov bp, offset Colunm_Number	
+mov ah, 13h
+int 10h
+pop dx
+pop bx
+pop cx
+pop ax
+
+push ip_adr2
+ret
+
+
+
+FirstP_Mahrozet:
+pop ip_adr
+push dx
+push ax
+push cx
+push bx
+mov al, 01B  	; advance cursor = true;
+           ; string contain attributes = false
+mov bh, 0  ; page number (must be 0 in EasyCPU)
+mov bl, 01011010b ; Magenta on Light Gray
+mov cx, Msg_Len1  ; msg length
+mov dl, 22 ; column
+mov dh, 9  ; row
+push ds			
+pop es  			
+mov bp, offset FirstP_win	
+mov ah, 13h
+int 10h
+pop bx
+pop cx
+pop ax
+pop dx
+push ip_adr
+ret
+
+
+SecoundP_Mahrozet:
+pop ip_adr
+push dx
+push ax
+push cx
+push bx
+mov al, 01B  	; advance cursor = true;
+           ; string contain attributes = false
+mov bh, 0  ; page number (must be 0 in EasyCPU)
+mov bl, 01011010b ; Magenta on Light Gray
+mov cx, Len_msg1 ; msg length
+mov dl, 22 ; column
+mov dh, 9  ; row
+push ds			
+pop es  			
+mov bp, offset SecoundP_win	
+mov ah, 13h
+int 10h
+pop bx
+pop cx
+pop ax
+pop dx
+push ip_adr
+ret
+
+TableStatus_Mahrozet:
+pop ip_adr
+push dx
+push ax
+push cx
+push bx
+mov al, 01B  	; advance cursor = true;
+           ; string contain attributes = false
+mov bh, 0  ; page number (must be 0 in EasyCPU)
+mov bl, 1100b ; Magenta on Light Gray
+mov cx, Msg_Table ; msg length
+mov dh,5
+mov dl,0
+push ds			
+pop es  			
+mov bp, offset Table_Status	
+mov ah, 13h
+int 10h
+pop bx
+pop cx
+pop ax
+pop dx
+push ip_adr
+ret
+
+
+
+
+
+TryAgain_Mahrozet:
+pop Tagain_adr
+push dx
+push ax
+push cx
+push bx
+mov al, 01B  	; advance cursor = true;
+           ; string contain attributes = false
+mov bh, 0  ; page number (must be 0 in EasyCPU)
+mov bl, 1100b ; Magenta on Light Gray
+mov cx, MsgLEN1 ; msg length
+mov dh,15
+mov dl,0
+push ds			
+pop es  			
+mov bp, offset Try_Again	
+mov ah, 13h
+int 10h
+pop bx
+pop cx
+pop ax
+pop dx
+push Tagain_adr
+ret
+
+FinaROW:
+pop ip_adr
+push dx
+push ax
+push cx
+push bx
+mov al, 01B  	; advance cursor = true;
+           ; string contain attributes = false
+mov bh, 0  ; page number (must be 0 in EasyCPU)
+mov bl, 10100000b ; Magenta on Light Gray
+mov cx, inaROW_Len ; msg length
+mov dh,1
+mov dl,33
+push ds			
+pop es  			
+mov bp, offset inaROW	
+mov ah, 13h
+int 10h
+pop bx
+pop cx
+pop ax
+pop dx
+push ip_adr
+ret
+
+
+insertCoirn:
+pop ip_adr
+pop culterNumber; column number
+
+push bx
+mov bl,rows
+push ax
+push dx
+push cx
+
+mov bh, 1 ; bh=  i #c#
+For1:
+mov dx,0
+mov ax,0
+cmp bh,6 
+ja exit_Insert ; it finish when (bh>bl(
+mov ch,bl ; ch=bl
+mov cl,bh ; cl = bh
+sub ch,cl
+inc bh
+mov al,columns ; גודל שורה
+mul ch
+add ax,culterNumber
+mov si,ax
+cmp board[si],'-' ; check if they equal
+jne For1
+mov dh,player
+mov board[si],dh
+jmp exit_Insert
+
+
+
+exit_Insert:
+pop cx
+pop dx
+pop ax
+pop bx
+push ip_adr
+ret
+
+
+
+;;;;;;;; check if we have 4 in a row 
+check_rows:
+pop ip_adr
+push ax
+push cx
+push bx
+push dx
+
+mov cl,5 ;;;; cl= index i #c#
+for_1:
+mov save_this,0
+cmp cl,0 ;;;check if they equal
+jl exitCheckRows
+mov ch,0 ;;;; ch = index j #C#
+for_2:
+mov save_this,0
+cmp ch,4
+je dec_clROW
+mov al,columns ; גודל שורה
+mul cl ;;; cl*al = ax
+add save_this,ax
+add al,ch ;;;; ax+j
+mov si,ax
+cmp board[si],'-'
+je inc_chROW
+mov dl,0
+mov save_this,si
+check4INrows: ; check if we have 4 in a row
+inc dl
+cmp dl,4
+je is_winner1
+mov bx,save_this
+add bl, dl
+mov di,bx
+mov al,board[si]
+cmp board[di],al
+jne inc_chROW
+jmp check4INrows 
+
+dec_clROW: dec cl
+jmp for_1
+
+inc_chROW: inc ch
+jmp for_2
+
+is_winner1:
+mov flag,0
+
+exitCheckRows:
+pop dx
+pop bx
+pop cx
+pop ax
+push ip_adr
+ret 
+
+;;;;;;;; check if we have 4 in a colunms 
+check_colunms:
+pop ip_adr
+pop culterNumber; number culter
+push ax 
+push bx
+push cx
+push dx
+
+mov bh,5 ; save index  
+
+mov cl,5 ; index i #c#
+for1_coulmn:
+cmp cl,2
+jl exitCheckColunms ; exit from this check
+     mov al,columns ;גודל שורה
+mul cl ; cl*al = ax
+add ax,culterNumber;
+mov si,ax
+cmp board[si],'-'  
+je dec_iCUL
+mov dl,0
+check4INcoulmn:
+mov bh,0
+add bh,cl
+
+inc dl
+cmp dl,4
+je is_Winner2
+sub bh,dl ; i
+mov al,7
+mul bh
+add ax,culterNumber ; i*godel+j
+mov di,ax
+mov al,board[di]
+cmp al,board[si]
+jne dec_iCUL
+jmp check4INcoulmn
+
+
+dec_iCUL: dec cl
+jmp for1_coulmn
+
+is_Winner2:
+mov flag,0
+
+
+exitCheckColunms:
+pop dx
+pop cx
+pop bx
+pop ax
+push ip_adr
+ret
+
+;;;;;;;; check if we have 4 in a diagonal (from small side)
+check_diagonalS:
+pop ip_adr
+push ax
+push bx
+push cx
+push dx
+mov bh,0
+mov bl,5 
+mov cl,5 ;index i #C#
+for1_small: 
+cmp cl,2 
+je exitCheckSmall
+mov ch,0 ; index j #c#
+for2_small:
+cmp ch,4
+je dec_clSM ; mov back to for1
+mov al,columns ;גודל שורה
+mul cl ; cl*al = ax
+add al,ch ; ax + j
+mov si,ax
+cmp board[si],'-'
+je inc_chSM ; mov back to for2
+
+mov dl,0
+check4INsmall:
+mov bl,0
+add bl,cl
+mov bh,0
+add bh,ch
+inc dl
+cmp dl,4
+je is_Winner3
+mov al,columns 
+sub bl,dl ; index i
+add bh,dl ; index j 
+mul bl ; bl*al = ax
+add al,bh
+mov di,ax
+mov ah,board[di]
+cmp ah,board[si]
+jne inc_chSM; mov back to for2
+
+jmp check4INsmall
+
+
+
+dec_clSM: dec cl
+
+jmp for1_small
+
+inc_chSM: inc ch
+
+jmp for2_small
+
+is_Winner3:
+mov flag,0
+
+exitCheckSmall:
+pop dx
+pop cx
+pop bx
+pop ax
+push ip_adr
+ret
+
+
+;;;;;;;; check if we have 4 in a diagonal (from right side)
+check_diagonalR:
+pop ip_adr
+push ax
+push bx
+push cx
+push dx
+mov cl,5 ; index i #c#
+for1_right:
+cmp cl,2
+je exitCheckRight
+mov ch,6 ; index j #C#
+for2_right:
+cmp ch,2
+je dec_clRG ; back again to for1
+mov al,columns ;גודל שורה
+mul cl ; cl*al = ax
+add al,ch
+mov si,ax
+cmp board[si],'-' ; check if they equal
+je dec_chRG ; back again to for2
+mov dl,0
+check4INright:
+mov bl,0 ; index i
+add bl,cl
+mov bh,0 ; index j
+add bh,ch
+inc dl
+cmp dl,4
+je isWinner4
+mov al,columns 
+sub bl,dl
+sub bh,dl
+mul bl ; bl*al=ax
+add al,bh
+mov di,ax
+mov al,board[di]
+cmp al,board[si]
+jne dec_chRG ; back again to for2
+jmp check4INright
+
+
+
+
+
+
+
+dec_clRG: dec cl
+jmp for1_right
+
+dec_chRG: dec ch
+jmp for2_right
+
+
+
+
+isWinner4:
+mov flag,0
+
+exitCheckRight:
+pop dx
+pop cx
+pop bx
+pop ax
+push ip_adr
+ret
+
+
+cleanScreen:
+pop ip_adr
+push ax
+
+mov ah,7
+mov al,0
+int 10h
+
+pop ax
+push ip_adr
+ret 
+
+
+print_table:
+pop ip_adr
+mov dx,0
+rows_for:
+cmp dx,rows
+je end_rows_for
+
+mov bx,0
+columns_for:
+cmp bx,columns
+je end_columns_for
+mov di,dx
+mov ax,columns
+push dx
+mul di
+mov di,ax
+pop dx
+add di,bx
+
+cmp board[di],'*'
+je Kohavit_blue
+
+cmp board[di],'o'
+je kohavit_red
+
+cmp board[di],'-'
+je ragil_white
+
+Kohavit_blue:
+push ax
+push bx
+push cx
+mov ah,9
+mov al,board[di]
+mov bl,1100b
+mov cx,1
+int 10h
+pop cx
+pop bx 
+pop ax
+jmp continue
+
+kohavit_red:
+push ax
+push bx
+push cx
+mov ah,9
+mov al,board[di]
+mov bl,0011b
+mov cx,1
+int 10h
+pop cx
+pop bx 
+pop ax
+jmp continue
+
+ragil_white:
+push ax
+push bx
+push cx
+mov ah,9
+mov al,board[di]
+mov bl,0111b
+mov cx,1
+int 10h
+pop cx
+pop bx 
+pop ax
+jmp continue
+
+
+
+
+push ax
+push bx
+push cx
+mov ah,9
+mov al,board[di]
+mov bl,1110b
+mov cx,1
+int 10h
+pop cx
+pop bx 
+pop ax
+
+continue:
+inc bx
+
+
+jmp columns_for
+end_columns_for:
+mov ah,14
+mov al, '\n'
+int 10h
+
+inc dx
+jmp rows_for
+
+end_rows_for:
+push ip_adr
+ret
+
+modulo:
+Pop ip_adr
+pop mahalek
+pop maholak
+push cx
+mov cx, maholak
+while_3: cmp cx, mahalek
+jb katan_3
+sub cx, mahalek 
+jmp while_3
+katan_3:
+mov maholak, cx
+pop cx
+push maholak
+push ip_adr
+ret
+
+get_number:
+pop ip_adr
+call Select_Culunm ; print mahrozet (Select Culunm) 
+push ax
+mov ah,7 ; input to al
+int 21h
+
+
+bdika: 
+mov di,0
+mov ah,0
+add di,ax
+sub di,49
+
+;;;   בדיקה שהטור אינו מלא
+cmp board[di],'*'
+je tryAgain
+cmp board[di],'o'
+je tryAgain
+
+;;;;; בדיקה שהמספר בין 1-7
+cmp al,48
+jbe tryAgain
+cmp al,55
+ja tryAgain
+jmp exitTat
+
+tryAgain:
+call TryAgain_Mahrozet
+mov ah,7 ; input to al again
+int 21h 
+jmp bdika
+
+exitTat:
+
+mov SaveS, ax
+pop ax
+push SaveS ; place to save ax 
+push ip_adr
+ret
+
+checkDraw:
+pop ip_adr
+push ax
+push bx
+push cx
+mov bl,0 ; bl = i
+mov bh,0 ; bh = j
+
+bdika_3:
+cmp bl,5
+jg exit_1
+cmp bh,6
+jg exit_2
+mov al,7
+mul bl
+add al,bh
+mov si,ax
+cmp board[si],'-'
+je exit
+add bh,1
+jmp bdika_3
+
+exit_1:
+call draw_mahrozet
+jmp exit_game
+
+exit_2:
+add bl,1
+jmp bdika_3
+
+exit:
+pop cx
+pop bx
+pop ax
+push ip_adr
+ret
+
+
+
+
+; here your sub-programs end
+end
+
